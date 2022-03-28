@@ -32,19 +32,7 @@ public class Frame {
     }
 
     String record(int i) {//throws Exception {
-        if(i <= 0) System.out.println("bad input");//throw new Exception("Input out of range");
-        if(i > 100 ) System.out.println("bad input"); //throw new Exception("Input out of range");
+        i %= 100;
         return records[i-1];
     }
-
-    void set(String up){
-        if(Character.getNumericValue(up.charAt(2)) != this.blockId) return;
-        String r = "" + up.charAt(7) + up.charAt(8) + up.charAt(9);
-        this.records[Integer.parseInt(r) - 1] = up;
-        this.dirty = true;
-    }
-
-    void pin(){this.pinned = true;}
-    void unpin(){this.pinned = false;}
-
 }
