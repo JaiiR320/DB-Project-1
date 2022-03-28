@@ -20,7 +20,27 @@ public class BufferPool {
         System.out.println("No space in buffer pool");
     }
 
-    void record(int index){
-        
+    void set(String data){
+
+    }
+
+    //returns the record from the associated index
+    String record(int index){
+        int block = index / 100;
+        //block is in the buffer
+        for (Frame frame : frames) {
+            if (frame.blockId == block) {
+                return frame.record(index % 100);
+            }
+        }
+        //else bring block into buffer
+        for (Frame frame : frames) {
+            if (frame.pinned == false || frame.blockId == -1) {
+                frames.set(frames.indexOf(frame), new Frame("data/F" + block + ".txt"));
+                return frame.record(index % 100);
+            }
+        }
+        System.out.println("Block not able to be brought into buffer");
+        return "";
     }
 }
