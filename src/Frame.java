@@ -32,7 +32,11 @@ public class Frame {
     }
 
     String record(int i) {//throws Exception {
-        i %= 100;
+        if (i % 100 == 0)
+            i = 100;
+        else
+            i %= 100;
+
         return records[i-1];
     }
 }
