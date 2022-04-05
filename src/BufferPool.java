@@ -3,6 +3,12 @@ import java.util.ArrayList;
 public class BufferPool {
     ArrayList<Frame> frames = new ArrayList<>();
     int max;
+    private int lastEvicted = -1;
+    
+    /**
+     * BufferPool constructor, takes in maximum number of frames
+     * @param max
+     */
     BufferPool(int max){
         this.max = max;
         for (int i = 0; i < max; i++) {
@@ -10,9 +16,10 @@ public class BufferPool {
         }
     }
 
-    /** HELPER
+    /** 
      * Returns the index of the frame that is requested, sets the frame if
-     * space is avaliable, returns -1 if not avaliable to be set
+     * space is avaliable, evicts unpinned frames when necessary
+     * returns -1 if not avaliable to be set
      * @param frameID
      * @return
      */
@@ -30,21 +37,39 @@ public class BufferPool {
         for (Frame frame : frames) {
             if (frame.blockId == -1) {
                 int index = frames.indexOf(frame);
-                frames.set(frames.indexOf(frame), new Frame("data/F" + blockId + ".txt"));
+                frames.set(frames.indexOf(frame), new Frame("src/Project1/F" + blockId + ".txt"));
                 System.out.println("brought file " + blockId + " from disk; placed in frame " + (index+1));
                 return index;
             }
         }
 
+        //there is not empty space, must evict
+        for (int i = lastEvicted+1; i < max; i++) {
+            Frame f = frames.get(i);
+            if(!f.pinned) { // only evict if not pinned
+                if (f.dirty) f.write(); // write if dirty
+                int prev = f.blockId;
+                int index = frames.indexOf(f);
+                frames.set(frames.indexOf(f), new Frame("src/Project1/F" + blockId + ".txt"));
+                System.out.println("evicted file " + prev + " from frame " + (index+1));
+                System.out.println("placed file " + blockId + " in frame " + (index+1));
+                this.lastEvicted = index;
+                return index;
+            }
+            if(i == lastEvicted) return -1; //if we hit last evicted again
+            if(i == max-1) i = 0;
+        }
+
         //evict candidate to make space
         for (Frame frame : frames) {
             if (frame.pinned == false){
-                if(frame.dirty);//write
+                if(frame.dirty) frame.write();
                 int prev = frame.blockId;
                 int index = frames.indexOf(frame);
-                frames.set(frames.indexOf(frame), new Frame("data/F" + blockId + ".txt"));
+                frames.set(frames.indexOf(frame), new Frame("src/Project1/F" + blockId + ".txt"));
                 System.out.println("evicted file " + prev + " from frame " + (index+1));
-                System.out.println("placed " + blockId + " in frame " + (index+1));
+                System.out.println("placed file " + blockId + " in frame " + (index+1));
+                this.lastEvicted = index;
                 return index;
             }
         }
@@ -60,40 +85,48 @@ public class BufferPool {
     void get(int recordId){
         System.out.println("getting " + recordId);
         int blockId = 0;
+        //calculate block and record id
         if(recordId % 100 == 0)
             blockId = recordId / 100;
         else
             blockId = (recordId / 100) + 1;
 
         int bufferIndex = this.getFrame(blockId);
-        if(bufferIndex != -1){
-            String out = frames.get(bufferIndex).record(recordId);
-            System.out.println(out + '\n');
+        if(bufferIndex == -1){ // frame not able to be placed in pool
+            System.out.println("Process blocked, no space in buffer\n");
             return;
         }
-        System.out.println("Process blocked, no space in buffer\n");
+
+        String out = frames.get(bufferIndex).record(recordId);
+        System.out.println(out + '\n');
     }
 
     /**
      * Set the data of the corresponding record, set frame as dirty
+     * similar methodology to get
      * @param recordId
      * @param data
      */
     void set(int recordId, String data){
         System.out.println("setting " + recordId);
         int blockId = 0;
-        if(recordId % 100 == 0)
-            blockId = recordId;
-        else
+        int index = -1;
+        if(recordId % 100 == 0){
+            blockId = recordId / 100;
+            index = 100;
+        }
+        else {
+            index = recordId % 100;
             blockId = (recordId / 100) + 1;
+        }
 
         int bufferIndex = getFrame(blockId);
-        if(bufferIndex == -1) {
+        if(bufferIndex == -1) { // frame not able to be placed in pool
             System.out.println("Process blocked, no space in buffer\n");
             return;
         }
         Frame f = frames.get(bufferIndex);
-        f.records[(recordId % 100) - 1] = data;
+        f.records[index - 1] = data;
         f.dirty = true;
         System.out.println("write was successful\n");
     }
@@ -108,7 +141,7 @@ public class BufferPool {
         int index = getFrame(blockId);
 
         if(index == -1){
-            System.out.println("Cannot bring frame into memory\n");
+            System.out.println("Process blocked, no space in buffer\n");
             return;
         }
 
@@ -142,6 +175,5 @@ public class BufferPool {
             }
         }
         System.out.println("block " + blockId + " cannot be unpinned because it is not in memory\n");
-
     }
 }

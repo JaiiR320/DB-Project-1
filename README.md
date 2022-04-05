@@ -1,18 +1,25 @@
-## Getting Started
+# Section 1
+Jair Meza, jdmeza
 
-Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
+### Compiling and running
+cd into this folder "DB-Project-1"
 
-## Folder Structure
+### Compiling
+`javac -d bin -sourcepath src src/Main.java`
 
-The workspace contains two folders by default, where:
+### Running
+`java -cp bin Main arg1 arg2...`
 
-- `src`: the folder to maintain sources
-- `lib`: the folder to maintain dependencies
+### Running with jar (if applicable)
+`java --enable-preview -jar JARFILENAME.jar arg1 arg2...`
 
-Meanwhile, the compiled output files will be generated in the `bin` folder by default.
+# Section 2
+All test cases are working as intended in the testcommand txt file. I have included a number of other tests that can be run by calling the test function in main, before the while loop. These test cases are also passing.
 
-> If you want to customize the folder structure, open `.vscode/settings.json` and update the related settings there.
+# Section 3
 
-## Dependency Management
+## Project Details
+I used VSCode to write the program, so you may have to manually compile the project.
+You could also just make a new project in your IDE and paste the source files in.
 
-The `JAVA PROJECTS` view allows you to manage your dependencies. More details can be found [here](https://github.com/microsoft/vscode-java-dependency#manage-dependencies).
+For writing new data to the "disk" I am just writing to a copy of the file, so that I maintain the original data for ease of debugging and running the program.
